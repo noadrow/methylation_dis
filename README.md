@@ -3,4 +3,7 @@ There's a lot to do in here
 
 for start I want to declare the function usuability much more orderedly and clear 
 seperate each functionality and give it a folder with test + readme 
-discard unusecode\code that made to be used as an example for the paper 
+discard unusecode\code that made to be used as an example for the paper
+
+get rid of un-needed scripts 
+and fix the fucking methylation to age plots
