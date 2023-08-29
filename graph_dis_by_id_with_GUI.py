@@ -8,7 +8,6 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def load_pickle_to_df():
     from tkinter.filedialog import askopenfilename
     import pickle
@@ -27,8 +26,6 @@ def load_pickle_to_df():
     print(f"Dataframe loaded: {time.time()-t0} sec")
     file.close()
     return df
-
-
 
 Tk().withdraw()
 

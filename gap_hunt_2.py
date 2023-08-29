@@ -145,13 +145,11 @@ def barplot_range_count(df,group,cgs):
         plt.clf()
         plt.close(fig)
 
-def load_pickle_to_df():
+def load_pickle_to_df(path):
     from tkinter.filedialog import askopenfilename
     import pickle
     import time
 
-    print("Waiting for pickle file path")
-    path = askopenfilename(title="Choose a pickle")
     print("Waiting for loading the file")
     file = open(path, 'rb')
     print("File load")
@@ -172,35 +170,57 @@ def output_log(d,OUTPUT):
     import time
     import os
     from datetime import datetime
+    import json
 
     now = str(datetime.now()).replace(" ","_").replace(":","-")
     folder_pos = os.path.dirname(OUTPUT)
-    import json
-    json_obj = json.dumps(d)
-    log_path = os.path.join(folder_pos,'log_{now}.txt')
-    with open(log_path, "x") as file:
-        json.dump(d, file)
-
+    log_path = os.path.join(folder_pos,f'log_{now}.json')
+    with open(log_path, 'w') as json_file:
+        json.dump(d, json_file)
     print(f"log file were saved at {log_path}")
 
+def load_input_from_user():
+    print("waiting for data")
+    print("...")
+    data_path = askopenfilename(title="Choose a pickle")
+    print("waiting for CpG list")
+    print("...")
+    cg_path = askopenfilename(title='Insert txt list (CpG list)')
+    print("waiting for saving folder")
+    print("...")
+    save_path = filedialog.askdirectory(title="Select Folder for saving the graphs")
 
-print("waiting for data")
-print("...")
-print("waiting for CpG list")
-print("...")
-cg_path = askopenfilename(title='Insert txt list (CpG list)')
-print("waiting for saving folder")
-print("...")
-save_path = filedialog.askdirectory(title="Select Folder for saving the graphs")
+    print("loading data")
+    print("...")
+    df = load_pickle_to_df(data_path)
+    print("loading cgs")
+    print("...")
+    cgs = read_cgs(cg_path)
 
-print("loading data")
-print("...")
-df = load_pickle_to_df()
-print("loading cgs")
-print("...")
-cgs = read_cgs(cg_path)
+    output_log(to_dict(cg_path=cg_path,save_path=save_path,cgs=cgs,data_path=data_path),OUTPUT=save_path)
+    return cgs,df
 
-output_log(to_dict(cg_path=cg_path,save_path=save_path,df=df,cgs=cgs),OUTPUT=save_path)
+def load_input_from_json(json_path):
+    import json
+    with open(json_path, 'r') as json_file:
+        conf_dict = json.load(json_file)
+    return [conf_dict['cg_path'],conf_dict['save_path'],conf_dict['cgs'],conf_dict['data_path']]
+
+print("waiting for log (re-run pipeline)")
+print("...")
+json_path = askopenfilename(title='Insert json log file (to re-run pipline, else close the window)')
+
+if (json_path):
+    print("initiating log's configuration INPUTS")
+    print("...")
+    cg_path,save_path,cgs,data_path = load_input_from_json(json_path)
+    df = load_pickle_to_df(data_path)
+
+else:
+    print("manual input rout")
+    print("...")
+    cgs,df = load_input_from_user()
+
 
 print("GMM and graph outputs initiated")
 print("...")
