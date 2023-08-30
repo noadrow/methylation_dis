@@ -1,14 +1,11 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import pyplot as plt
-import numpy as np
 from sklearn.mixture import GaussianMixture
 from tkinter import filedialog
 from tkinter.filedialog import askopenfilename
 import time
 import os
-
 def read_cgs(file_path):
     with open(file_path, "r") as file:
         lines = [line.strip() for line in file]
@@ -22,52 +19,10 @@ def better_gap(cgs,df):
 def Extract(lst,i):
     return [item[i] for item in lst]
 
-def gauss_mode_graph(**kwargs):
-    fig = plt.figure(figsize=(20, 6.8))
-    fig.subplots_adjust(left=0.12, right=0.97,
-                        bottom=0.21, top=0.9, wspace=0.5)
+def gauss_mode_graph(X_l,cg,save_path):
 
-    # plot 1: data + best-fit mixture
-    ax = fig.add_subplot(131)
-    M_best = models[np.argmin(AIC)]
-
-    x = np.linspace(0, 10000, 1)
-    logprob = M_best.score_samples(x.reshape(-1, 1))
-    responsibilities = M_best.predict_proba(x.reshape(-1, 1))
-    pdf = np.exp(logprob)
-    pdf_individual = responsibilities * pdf[:, np.newaxis]
-
-    ax.hist(X, 30, density=True, histtype='stepfilled', alpha=0.4)
-    ax.plot(x, pdf, '-k')
-    ax.plot(x, pdf_individual, '--k')
-    ax.text(0.04, 0.96, "Best-fit Mixture",
-            ha='left', va='top', transform=ax.transAxes)
-    ax.set_xlabel('$x$')
-    ax.set_ylabel('$p(x)$')
-
-    # plot 3: posterior probabilities for each component
-    ax = fig.add_subplot(133)
-
-    p = responsibilities
-    p = p.cumsum(1).T
-
-    ax.fill_between(x, 0, p[0], color='gray', alpha=0.3)
-    ax.fill_between(x, p[0], p[1], color='gray', alpha=0.5)
-    ax.fill_between(x, p[1], 1, color='gray', alpha=0.7)
-    #ax.set_xlim(0, 1)
-    #ax.set_ylim(0, 1)
-    ax.set_xlabel('$x$')
-    ax.set_ylabel(r'$p({\rm class}|x)$')
-
-    ax.text(-5, 0.3, 'class 1', rotation='vertical')
-    ax.text(0, 0.5, 'class 2', rotation='vertical')
-    ax.text(3, 0.3, 'class 3', rotation='vertical')
-
-    plt.savefig(os.path.join(save_path,f"{cg}.png"))
-
-def gauss_mode(X):
-    X = np.array([[l] for l in X])
-    # fit models with 1-10 components
+    X = np.array([[l] for l in X_l])
+    # fit models with 1-3 components
     N = np.arange(1, 4)
     models = [None for i in range(len(N))]
 
@@ -77,6 +32,25 @@ def gauss_mode(X):
     # compute the AIC and the BIC
     AIC = [m.aic(X) for m in models]
     BIC = [m.bic(X) for m in models]
+
+    fig, ax1 = plt.subplots()
+
+    M_best = models[np.argmin(AIC)]
+
+    x = np.arange(0, 1, 0.01)
+    logprob = M_best.score_samples(x.reshape(-1, 1))
+    responsibilities = M_best.predict_proba(x.reshape(-1, 1))
+    pdf = np.exp(logprob)
+    pdf_individual = responsibilities * pdf[:, np.newaxis]
+
+    ax1.hist(X, 30, density=True, histtype='stepfilled', alpha=0.4)
+    ax2 = ax1.twinx()
+    ax2.plot(x, pdf_individual, '--k')
+
+    #plt.show()
+
+
+    plt.savefig(os.path.join(save_path,f"{cg}.png"))
 
     '''
     M_best = models[np.argmin(AIC)]
@@ -96,7 +70,6 @@ def gauss_mode(X):
     res = stats_out([X0,X1,X2])
     return [X,pdf_individual]
     '''
-    return [AIC,models,X]
 
 
 def stats_out(pdf_list):
@@ -198,7 +171,7 @@ def load_input_from_user():
     cgs = read_cgs(cg_path)
 
     output_log(to_dict(cg_path=cg_path,save_path=save_path,cgs=cgs,data_path=data_path),OUTPUT=save_path)
-    return cgs,df
+    return cgs,df,save_path
 
 def load_input_from_json(json_path):
     import json
@@ -219,7 +192,7 @@ if (json_path):
 else:
     print("manual input rout")
     print("...")
-    cgs,df = load_input_from_user()
+    cgs,df,save_path = load_input_from_user()
 
 
 print("GMM and graph outputs initiated")
@@ -229,12 +202,10 @@ t0 = time.time()
 for cg in cgs:
     if (cg in df.index):
         if(len(df.loc[cg])>0):
-            AIC,models,X = gauss_mode(range_count(df,cg))
-            gauss_mode_graph(models=models,AIC=AIC,save_path=save_path,cg=cg,X=X)
+            #AIC,models,X = gauss_mode(range_count(df,cg))
+            gauss_mode_graph(X_l=df.loc[cg],save_path=save_path,cg=cg)
     else:
         print("cg is not in the table")
 
 timer = time.time()-t0
 print(f"finished GMM process in {timer} sec")
-
-
